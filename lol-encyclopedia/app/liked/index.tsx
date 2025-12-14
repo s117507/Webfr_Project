@@ -9,50 +9,61 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Champion } from "../champions";
 
 const API_URL = "https://sampleapis.assimilate.be/lol/champions";
-const STORAGE_KEY = "likedChampions";
+const STORAGE_KEY = "likedChampionsIds";
+
+interface LolChampion {
+    id: number;
+    name: string;
+    image: {
+        full: string;
+    };
+}
 
 export default function LikedScreen() {
-    const [likedChampions, setLikedChampions] = useState<Champion[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [likedChampions, setLikedChampions] = useState<LolChampion[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function loadFavorites() {
+        const loadFavorites = async () => {
             try {
                 const stored = await AsyncStorage.getItem(STORAGE_KEY);
-                const likedIds: number[] = stored ? JSON.parse(stored) : [];
+                const ids: number[] = stored ? JSON.parse(stored) : [];
 
-                if (likedIds.length === 0) {
+                if (ids.length === 0) {
                     setLikedChampions([]);
-                    setLoading(false);
+                    setIsLoading(false);
                     return;
                 }
 
                 const response = await fetch(API_URL);
-                const data = await response.json();
+                const json = await response.json();
 
-                const mapped: Champion[] = data
-                    .map((item: any) => ({
-                        id: item.id,
-                        name: item.name,
-                        image: { full: item.image.full },
-                    }))
-                    .filter((champ: Champion) => likedIds.includes(champ.id));
+                const mapped: LolChampion[] = json
+                    .map((item: any) => {
+                        return {
+                            id: item.id,
+                            name: item.name,
+                            image: {
+                                full: item.image.full,
+                            },
+                        };
+                    })
+                    .filter((champ: LolChampion) => ids.includes(champ.id));
 
                 setLikedChampions(mapped);
-            } catch (err) {
-                console.error("Error loading liked champions:", err);
+            } catch (error) {
+                console.log("Error loading favorites", error);
             } finally {
-                setLoading(false);
+                setIsLoading(false);
             }
-        }
+        };
 
         loadFavorites();
     }, []);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <View
                 style={{
@@ -64,7 +75,7 @@ export default function LikedScreen() {
             >
                 <ActivityIndicator size="large" />
                 <Text style={{ color: "#e5e7eb", marginTop: 8 }}>
-                    Loading liked champions...
+                    Favorieten aan het laden...
                 </Text>
             </View>
         );
@@ -88,8 +99,8 @@ export default function LikedScreen() {
                         textAlign: "center",
                     }}
                 >
-                    You haven't liked any champions yet.{"\n"}
-                    Go to the champions screen and tap the hearts.
+                    Je hebt nog geen champions geliked.{"\n"}
+                    Ga naar de lijst en tik op de hartjes.
                 </Text>
             </View>
         );
@@ -112,7 +123,7 @@ export default function LikedScreen() {
                     marginBottom: 8,
                 }}
             >
-                Liked champions
+                Favoriete champions
             </Text>
 
             <ScrollView>

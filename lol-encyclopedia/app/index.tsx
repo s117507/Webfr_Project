@@ -31,60 +31,56 @@ export default function HomeScreen() {
                     marginBottom: 24,
                 }}
             >
-                Browse League of Legends champions, their stats, roles, and lore.
+                In deze app kan je League of Legends champions bekijken, details lezen
+                en je favorieten bewaren.
             </Text>
 
-            {/* Buttons */}
-            <View>
-                {/* Go to champions grid */}
-                <Link href="/champions" asChild>
-                    <Pressable
+            <Link href="/champions" asChild>
+                <Pressable
+                    style={{
+                        backgroundColor: "#60a5fa",
+                        paddingVertical: 12,
+                        paddingHorizontal: 20,
+                        borderRadius: 999,
+                        alignSelf: "flex-start",
+                        marginBottom: 12,
+                    }}
+                >
+                    <Text
                         style={{
-                            backgroundColor: "#60a5fa",
-                            paddingVertical: 12,
-                            paddingHorizontal: 20,
-                            borderRadius: 999,
-                            alignSelf: "flex-start",
+                            color: "#0b1120",
+                            fontWeight: "bold",
+                            fontSize: 16,
                         }}
                     >
-                        <Text
-                            style={{
-                                color: "#0b1120",
-                                fontWeight: "bold",
-                                fontSize: 16,
-                            }}
-                        >
-                            View champions
-                        </Text>
-                    </Pressable>
-                </Link>
+                        Bekijk champions
+                    </Text>
+                </Pressable>
+            </Link>
 
-                {/* Go to liked screen */}
-                <Link href="/liked" asChild>
-                    <Pressable
+            <Link href="/liked" asChild>
+                <Pressable
+                    style={{
+                        backgroundColor: "#111827",
+                        borderWidth: 1,
+                        borderColor: "#60a5fa",
+                        paddingVertical: 12,
+                        paddingHorizontal: 20,
+                        borderRadius: 999,
+                        alignSelf: "flex-start",
+                    }}
+                >
+                    <Text
                         style={{
-                            marginTop: 12,
-                            backgroundColor: "#111827",
-                            borderWidth: 1,
-                            borderColor: "#60a5fa",
-                            paddingVertical: 12,
-                            paddingHorizontal: 20,
-                            borderRadius: 999,
-                            alignSelf: "flex-start",
+                            color: "#e5e7eb",
+                            fontWeight: "bold",
+                            fontSize: 16,
                         }}
                     >
-                        <Text
-                            style={{
-                                color: "#e5e7eb",
-                                fontWeight: "bold",
-                                fontSize: 16,
-                            }}
-                        >
-                            Liked champions
-                        </Text>
-                    </Pressable>
-                </Link>
-            </View>
+                        Favoriete champions
+                    </Text>
+                </Pressable>
+            </Link>
         </View>
     );
 }

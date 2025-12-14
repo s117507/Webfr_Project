@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
-    ActivityIndicator,
     ScrollView,
+    ActivityIndicator,
     Image,
 } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 
-type Champion = {
+interface LolChampionDetail {
     id: number;
     name: string;
     title: string;
@@ -27,35 +27,62 @@ type Champion = {
         movespeed: number;
         attackrange: number;
     };
-};
+}
 
 const API_URL = "https://sampleapis.assimilate.be/lol/champions";
 
 export default function ChampionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const [champion, setChampion] = useState<Champion | null>(null);
-    const [loading, setLoading] = useState(true);
+
+    const [champion, setChampion] = useState<LolChampionDetail | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function load() {
+        const loadChampion = async () => {
             try {
                 const response = await fetch(API_URL);
-                const data: Champion[] = await response.json();
-                const found = data.find((c) => c.id === Number(id));
-                setChampion(found ?? null);
-            } catch (err) {
-                console.error(err);
+                const data = await response.json();
+
+                const found = data.find((item: any) => item.id === Number(id));
+
+                if (found) {
+                    const mapped: LolChampionDetail = {
+                        id: found.id,
+                        name: found.name,
+                        title: found.title,
+                        blurb: found.blurb,
+                        partype: found.partype,
+                        image: {
+                            full: found.image.full,
+                            loading: found.image.loading,
+                        },
+                        tags: found.tags,
+                        stats: {
+                            hp: found.stats.hp,
+                            attackdamage: found.stats.attackdamage,
+                            armor: found.stats.armor,
+                            spellblock: found.stats.spellblock,
+                            movespeed: found.stats.movespeed,
+                            attackrange: found.stats.attackrange,
+                        },
+                    };
+                    setChampion(mapped);
+                } else {
+                    setChampion(null);
+                }
+            } catch (error) {
+                console.log("Error loading champion", error);
             } finally {
-                setLoading(false);
+                setIsLoading(false);
             }
-        }
+        };
 
         if (id) {
-            load();
+            loadChampion();
         }
     }, [id]);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <View
                 style={{
@@ -67,7 +94,7 @@ export default function ChampionDetailScreen() {
             >
                 <ActivityIndicator size="large" />
                 <Text style={{ color: "#e5e7eb", marginTop: 8 }}>
-                    Loading champion...
+                    Champion aan het laden...
                 </Text>
             </View>
         );
@@ -84,7 +111,7 @@ export default function ChampionDetailScreen() {
                     padding: 16,
                 }}
             >
-                <Text style={{ color: "#f87171" }}>Champion not found.</Text>
+                <Text style={{ color: "#f87171" }}>Champion niet gevonden.</Text>
             </View>
         );
     }
@@ -122,7 +149,6 @@ export default function ChampionDetailScreen() {
                 >
                     {champion.name}
                 </Text>
-
                 <Text
                     style={{
                         color: "#9ca3af",
@@ -193,7 +219,7 @@ export default function ChampionDetailScreen() {
                         marginBottom: 4,
                     }}
                 >
-                    Summary
+                    Samenvatting
                 </Text>
                 <Text
                     style={{
@@ -205,6 +231,7 @@ export default function ChampionDetailScreen() {
                     {champion.blurb}
                 </Text>
 
+                {/* stats */}
                 <Text
                     style={{
                         color: "#e5e7eb",
@@ -214,7 +241,7 @@ export default function ChampionDetailScreen() {
                         marginBottom: 4,
                     }}
                 >
-                    Base stats
+                    Basisstatistieken
                 </Text>
                 <View>
                     <Text style={{ color: "#e5e7eb", marginBottom: 2 }}>
@@ -230,7 +257,7 @@ export default function ChampionDetailScreen() {
                         Magic resist: {champion.stats.spellblock}
                     </Text>
                     <Text style={{ color: "#e5e7eb", marginBottom: 2 }}>
-                        Move speed: {champion.stats.movespeed}
+                        Movespeed: {champion.stats.movespeed}
                     </Text>
                     <Text style={{ color: "#e5e7eb", marginBottom: 2 }}>
                         Attack range: {champion.stats.attackrange}

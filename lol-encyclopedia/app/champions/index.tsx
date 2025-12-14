@@ -10,23 +10,25 @@ import {
 import { Link } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export interface Champion {
+const API_URL = "https://sampleapis.assimilate.be/lol/champions";
+const STORAGE_KEY = "likedChampionsIds";
+
+export interface LolChampion {
     id: number;
     name: string;
+    title: string;
     image: {
         full: string;
     };
 }
 
 interface ChampionCardProps {
-    champion: Champion;
-    liked: boolean;
-    onToggleLike: () => void;
+    champion: LolChampion;
+    isLiked: boolean;
+    onToggle: () => void;
 }
 
-const STORAGE_KEY = "likedChampions";
-
-const ChampionCard = ({ champion, liked, onToggleLike }: ChampionCardProps) => {
+const ChampionCard = ({ champion, isLiked, onToggle }: ChampionCardProps) => {
     return (
         <View
             style={{
@@ -71,7 +73,7 @@ const ChampionCard = ({ champion, liked, onToggleLike }: ChampionCardProps) => {
             </Link>
 
             <Pressable
-                onPress={onToggleLike}
+                onPress={onToggle}
                 style={{
                     position: "absolute",
                     top: 0,
@@ -82,84 +84,84 @@ const ChampionCard = ({ champion, liked, onToggleLike }: ChampionCardProps) => {
                 <Text
                     style={{
                         fontSize: 18,
-                        color: liked ? "#f97373" : "#9ca3af",
+                        color: isLiked ? "#f97373" : "#9ca3af",
                     }}
                 >
-                    {liked ? "♥" : "♡"}
+                    {isLiked ? "♥" : "♡"}
                 </Text>
             </Pressable>
         </View>
     );
 };
 
-const ChampionsScreen = () => {
-    const [champions, setChampions] = useState<Champion[]>([]);
+export default function ChampionsScreen() {
+    const [champions, setChampions] = useState<LolChampion[]>([]);
     const [likedIds, setLikedIds] = useState<number[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function loadChamps() {
+        const loadChampions = async () => {
             try {
-                const response = await fetch(
-                    "https://sampleapis.assimilate.be/lol/champions"
-                );
-                const data = await response.json();
+                const response = await fetch(API_URL);
+                const json = await response.json();
 
-                const mapped: Champion[] = data.map((item: any) => ({
-                    id: item.id,
-                    name: item.name,
-                    image: { full: item.image.full },
-                }));
+                const mapped: LolChampion[] = json.map((item: any) => {
+                    return {
+                        id: item.id,
+                        name: item.name,
+                        title: item.title,
+                        image: {
+                            full: item.image.full,
+                        },
+                    };
+                });
 
                 setChampions(mapped);
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load champions");
+            } catch (error) {
+                console.log("Error fetching champions", error);
             } finally {
-                setLoading(false);
+                setIsLoading(false);
             }
-        }
+        };
 
-        loadChamps();
+        loadChampions();
     }, []);
 
     useEffect(() => {
-        async function loadLiked() {
+        const loadLiked = async () => {
             try {
                 const stored = await AsyncStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const parsed = JSON.parse(stored) as number[];
                     setLikedIds(parsed);
                 }
-            } catch (err) {
-                console.error("Error loading liked champions", err);
+            } catch (error) {
+                console.log("Error loading liked ids", error);
             }
-        }
+        };
 
         loadLiked();
     }, []);
 
-    const toggleLike = async (id: number) => {
-        setLikedIds((prev) => {
-            let updated: number[];
-            if (prev.includes(id)) {
-                updated = prev.filter((x) => x !== id);
-            } else {
-                updated = [...prev, id];
+    const toggleFavorite = (id: number) => {
+        let updated = [...likedIds];
+
+        if (updated.includes(id)) {
+            updated = updated.filter((x) => x !== id);
+        } else {
+            updated.push(id);
+        }
+
+        setLikedIds(updated);
+
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(
+            (error) => {
+                console.log("Error saving liked ids", error);
             }
-
-            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(
-                (err) => {
-                    console.error("Error saving liked champions", err);
-                }
-            );
-
-            return updated;
-        });
+        );
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <View
                 style={{
@@ -171,24 +173,8 @@ const ChampionsScreen = () => {
             >
                 <ActivityIndicator size="large" />
                 <Text style={{ color: "#e5e7eb", marginTop: 8 }}>
-                    Loading champions...
+                    Champions aan het laden...
                 </Text>
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View
-                style={{
-                    flex: 1,
-                    backgroundColor: "#020617",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    padding: 16,
-                }}
-            >
-                <Text style={{ color: "#f87171" }}>{error}</Text>
             </View>
         );
     }
@@ -210,7 +196,7 @@ const ChampionsScreen = () => {
                     marginBottom: 8,
                 }}
             >
-                Champions
+                Alle champions
             </Text>
 
             <ScrollView>
@@ -225,14 +211,12 @@ const ChampionsScreen = () => {
                         <ChampionCard
                             key={champion.id}
                             champion={champion}
-                            liked={likedIds.includes(champion.id)}
-                            onToggleLike={() => toggleLike(champion.id)}
+                            isLiked={likedIds.includes(champion.id)}
+                            onToggle={() => toggleFavorite(champion.id)}
                         />
                     ))}
                 </View>
             </ScrollView>
         </View>
     );
-};
-
-export default ChampionsScreen;
+}
